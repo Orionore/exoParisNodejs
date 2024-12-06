@@ -1,0 +1,90 @@
+<!-- views/login.ejs -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Paris Arrondissements</title>
+    <link rel="stylesheet" href="../styles/main.scss">
+</head>
+<body>
+    <div class="login-container">
+        <div class="header">
+            <h1>Paris Arrondissements</h1>
+            <p>Connectez-vous pour accéder à votre espace</p>
+        </div>
+
+        <% if (locals.error) { %>
+            <div class="error-message"><%= error %></div>
+        <% } %>
+
+        <form action="/api/login" method="POST">
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="submit-btn">Se connecter</button>
+        </form>
+
+        <div class="links">
+            <a href="/register">Créer un compte</a> |
+            <a href="/forgot-password">Mot de passe oublié ?</a>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/home';
+                } else {
+                    const errorDiv = document.querySelector('.error-message') ||
+                        document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.textContent = data.message || 'Erreur de connexion';
+
+                    if (!document.querySelector('.error-message')) {
+                        document.querySelector('.header').after(errorDiv);
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        });
+    </script>
+</body>
+</html>

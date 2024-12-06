@@ -1,0 +1,96 @@
+<!-- views/home.ejs -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Paris Arrondissements</title>
+    <link rel="stylesheet" href="../styles/main.scss">
+</head>
+<body>
+<nav class="navbar">
+    <h1>Paris Arrondissements</h1>
+    <div class="user-menu">
+        <span>Bienvenue, <%= locals.username %></span>
+        <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+</nav>
+
+<main class="main-content">
+    <section class="search-section">
+        <div class="search-bar">
+            <input
+                    type="text"
+                    class="search-input"
+                    placeholder="Rechercher un arrondissement..."
+                    id="searchInput">
+            <button class="search-btn" onclick="search()">Rechercher</button>
+        </div>
+    </section>
+
+    <div class="arrondissements-grid" id="arrondissementsContainer">
+        <!-- Les cartes d'arrondissement seront générées dynamiquement -->
+    </div>
+</main>
+
+<script>
+    // Fonction de déconnexion
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    }
+
+    // Fonction de recherche
+    async function search() {
+        const searchTerm = document.getElementById('searchInput').value;
+        try {
+            const response = await fetch(`/api/search/${searchTerm}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            updateArrondissements(data);
+        } catch (error) {
+            console.error('Erreur de recherche:', error);
+        }
+    }
+
+    // Fonction de mise à jour de l'affichage
+    function updateArrondissements(data) {
+        const container = document.getElementById('arrondissementsContainer');
+        container.innerHTML = data.map(arr => `
+                <div class="arrondissement-card">
+                    <h2>${arr.title}</h2>
+                    <p>${arr.content}</p>
+                    <div class="statistics">
+                        <div class="stat-item">
+                            <div class="value">${arr.totalPages || 0}</div>
+                            <div class="label">Pages</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value">${arr.lastUpdate || 'N/A'}</div>
+                            <div class="label">Dernière mise à jour</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    // Chargement initial des données
+    window.addEventListener('load', async () => {
+        try {
+            const response = await fetch('/api/synthese', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            updateArrondissements(data);
+        } catch (error) {
+            console.error('Erreur de chargement:', error);
+        }
+    });
+</script>
+</body>
+</html>
